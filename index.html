@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>آب‌یار | مدیریت نوبت آب</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0B7285">
+    <style>
+        :root {
+            --primary: #0B7285;
+            --primary-dark: #096070;
+            --secondary: #2F9E44;
+            --bg: #F8F9FA;
+            --card-bg: #FFFFFF;
+            --text: #212529;
+            --muted: #868E96;
+            --border: #E9ECEF;
+        }
+
+        * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); margin: 0; padding: 0; display: flex; justify-content: center; }
+        
+        .phone-container {
+            width: 100%;
+            max-width: 480px;
+            min-height: 100vh;
+            background: var(--card-bg);
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Splash Screen */
+        #splash-screen {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(circle, #0D8A9F 0%, #085360 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            cursor: pointer;
+            transition: opacity 0.5s ease;
+        }
+        .splash-logo {
+            width: 120px;
+            height: 120px;
+            background: white;
+            border-radius: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        .splash-logo svg { width: 70px; height: 70px; fill: var(--primary); }
+        .splash-title { font-size: 28px; font-weight: bold; margin: 10px 0; }
+        .splash-subtitle { font-size: 14px; opacity: 0.8; }
+        .click-to-enter { margin-top: 50px; font-size: 13px; opacity: 0.6; animation: blink 1.5s infinite; }
+
+        @keyframes blink { 0%, 100% { opacity: 0.2; } 50% { opacity: 0.8; } }
+
+        /* Header */
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        /* Main Content */
+        main { flex: 1; padding: 20px; overflow-y: auto; padding-bottom: 80px; }
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* Menu / Navigation */
+        nav {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 65px;
+            background: white;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 10;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 11px;
+            cursor: pointer;
+            flex: 1;
+            padding: 8px 0;
+        }
+        .nav-item.active { color: var(--primary); font-weight: bold; }
+        .nav-icon { font-size: 20px; margin-bottom: 4px; }
+
+        /* Forms and UI Cards */
+        .card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+        .card-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--primary);
+            margin-top: 0;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input:focus, select:focus { border-color: var(--primary); }
+        .row { display: flex; gap: 10px; }
+        .col { flex: 1; }
+
+        button.btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-secondary { background: #E2E8F0; color: #4A5568; }
+        .btn-danger { background: #FFF5F5; color: #E53E3E; border: 1px solid #FED7D7; }
+
+        /* Calendar and Lists */
+        .badge-next {
+            background: var(--secondary);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            display: inline-block;
+        }
+        .schedule-list { display: flex; flex-direction: column; gap: 10px; }
+        .schedule-item {
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .schedule-item.active-turn {
+            border-color: var(--secondary);
+            background: #F4FBF7;
+        }
+        .countdown {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--secondary);
+            margin: 10px 0;
+        }
+        .note-box {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="phone-container">
+        
+        <!-- صفحه شروع (Splash Screen) -->
+        <div id="splash-screen" onclick="enterApp()">
+            <div class="splash-logo">
+                <!-- آیکون قطره و ساعت -->
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0zM12 18a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm1-7v3h-3v2h5v-5z"/>
+                </svg>
+            </div>
+            <div class="splash-title">آب‌یار</div>
+            <div class="splash-subtitle">سامانه مدیریت و یادآور نوبت آب کشاورزی</div>
+            <div class="click-to-enter">برای ورود روی صفحه ضربه بزنید</div>
+        </div>
+
+        <!-- هدر برنامه -->
+        <header id="app-header">آب‌یار</header>
+
+        <!-- محتوای صفحات -->
+        <main>
+            
+            <!-- صفحه ۱: ثبت اطلاعات مالک -->
+            <div id="page-owner" class="page active">
+                <div class="card">
+                    <div class="card-title">👤 ثبت اطلاعات مالک و نوبت آب</div>
+                    <div class="form-group">
+                        <label>نام مالک زمین:</label>
+                        <input type="text" id="owner-name" placeholder="مثال: محمد احمدی">
+                    </div>
+                    <div class="form-group">
+                        <label>نام زمین یا مزرعه:</label>
+                        <input type="text" id="land-name" placeholder="مثال: باغ انگور پایین دست">
+                    </div>
+                    <div class="row">
+                        <div class="col form-group">
+                            <label>تاریخ اولین نوبت (میلادی):</label>
+                            <input type="date" id="start-date">
+                        </div>
+                        <div class="col form-group">
+                            <label>ساعت شروع:</label>
+                            <input type="time" id="start-time">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col form-group">
+                            <label>مدت آب (ساعت):</label>
+                            <input type="number" id="duration-hours" value="2" min="0">
+                        </div>
+                        <div class="col form-group">
+                            <label>دقیقه:</label>
+                            <input type="number" id="duration-minutes" value="0" min="0" max="59">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>دوره آبیاری (روز):</label>
+                        <input type="number" id="cycle-days" value="12">
+                    </div>
+                    <div class="form-group">
+                        <label>یادداشت اضافی:</label>
+                        <textarea id="owner-notes" rows="2" placeholder="توضیحاتی مثل مسیر آب، میراب یا..."></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveOwnerInfo()">ذخیره اطلاعات نوبت</button>
+                </div>
+            </div>
+
+            <!-- صفحه ۲: تقویم نوبت‌ها -->
+            <div id="page-calendar" class="page">
+                <div class="card">
+                    <div class="card-title">📅 وضعیت نوبت بعدی</div>
+                    <div class="countdown" id="countdown-text">اطلاعاتی وارد نشده است</div>
+                    <div id="next-turn-details" style="text-align: center; font-size: 13px; color: var(--muted);"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">📋 جدول نوبت‌های ۱۲ روزه آینده</div>
+                    <div class="schedule-list" id="schedule-container">
+                        <p style="text-align: center; color: var(--muted);">هنوز اطلاعاتی ثبت نشده است.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- صفحه ۳: به‌روزرسانی و مدیریت داده -->
+            <div id="page-settings" class="page">
+                <div class="card">
+                    <div class="card-title">🔄 ویرایش و تنظیمات یادآور</div>
+                    <div class="form-group">
+                        <label>انتخاب زمان یادآوری نوبت آب:</label>
+                        <select id="reminder-timing">
+                            <option value="at-time">در لحظه شروع نوبت</option>
+                            <option value="1-hour">۱ ساعت قبل از نوبت</option>
+                            <option value="1-day">۲۴ ساعت قبل از نوبت</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveSettings()">ثبت تنظیمات یادآور</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">💾 پشتیبان‌گیری و خروجی داده</div>
+                    <p style="font-size: 12px; color: var(--muted); margin-bottom: 15px;">
+                        می‌توانید اطلاعات نوبت خود را جهت انتقال به گوشی دیگر دانلود کنید.
+                    </p>
+                    <div class="row">
+                        <div class="col">
+                            <button class="btn btn-secondary" onclick="exportData()">📥 دانلود فایل پشتیبان</button>
+                        </div>
+                        <div class="col">
+                            <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">📤 بارگذاری فایل</button>
+                            <input type="file" id="import-file" style="display: none;" onchange="importData(event)">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="border-color: #FED7D7;">
+                    <div class="card-title" style="color: #E53E3E;">⚠️ پاک‌سازی داده‌ها</div>
+                    <p style="font-size: 12px; color: var(--muted); margin-bottom: 15px;">با این کار کل اطلاعات نوبت‌ها حذف می‌شود.</p>
+                    <button class="btn btn-danger" onclick="clearAllData()">حذف کامل اطلاعات</button>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- ناوبری پایین صفحه -->
+        <nav>
+            <div class="nav-item active" onclick="switchPage('owner', this)">
+                <div class="nav-icon">👤</div>
+                <div>مالک</div>
+            </div>
+            <div class="nav-item" onclick="switchPage('calendar', this)">
+                <div class="nav-icon">📅</div>
+                <div>تقویم</div>
+            </div>
+            <div class="nav-item" onclick="switchPage('settings', this)">
+                <div class="nav-icon">⚙️</div>
+                <div>تنظیمات</div>
+            </div>
+        </nav>
+
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
